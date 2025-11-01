@@ -4,17 +4,60 @@ import os
 import random
 from engines.load_engine import load_engine_by_index, get_max_index, get_engine_info_by_index
 from chess.pgn import Game
+from neural_network.model import NNUEModel
+import torch
 
 def debug_print(message, debug):
     if debug:
         print(message)
 
 def score_position(board):
-    """Score a given board position. For now, return a random value between 0 and 1000."""
-    return random.randint(0, 1000)
+    """Score a given board position using the NNUE model."""
+    # Convert the board to a feature tensor
+    board_features = convert_board_to_features(board)
 
-def run_tournament(nn_name, generation, debug=False):
-    """Run a tournament where the user plays against increasingly harder engines."""
+    # Load the NNUE model (ensure the path to the model is correct)
+    nnue_model = NNUEModel.load_stockfish_format("path/to/your/nnue_model.nnue")
+
+    # Evaluate the board using the NNUE model
+    score = nnue_model.evaluate_board(torch.tensor(board_features, dtype=torch.float32))
+
+    return score
+
+def convert_board_to_features(board):
+    """Convert a chess.Board object to NNUE-compatible features.
+
+    Args:
+        board (chess.Board): The chess board object.
+
+    Returns:
+        list: A list of features representing the board state.
+    """
+    # Placeholder for feature extraction logic
+    # Replace this with actual feature extraction logic compatible with NNUE
+    features = [0] * 512  # Example: Zero-filled features for HalfKP
+
+    # Example: Populate features based on board state
+    for square in chess.SQUARES:
+        piece = board.piece_at(square)
+        if piece:
+            # Example: Encode piece type and color into features
+            features[square] = piece.piece_type * (1 if piece.color == chess.WHITE else -1)
+
+    return features
+
+def run_tournament(nn_name, generation, model, debug=False):
+    """Run a tournament where the user plays against increasingly harder engines.
+
+    Args:
+        nn_name (str): Name of the neural network.
+        generation (int): Generation number.
+        model (NNUEModel): The NNUE model to evaluate board positions.
+        debug (bool): Enable debug mode.
+
+    Returns:
+        tuple: Final score and the index of the last engine played against.
+    """
     score = 0
     index = 0
 
@@ -48,7 +91,8 @@ def run_tournament(nn_name, generation, debug=False):
                         scored_moves = []
                         for move in legal_moves:
                             board.push(move)
-                            score = score_position(board)
+                            board_features = torch.tensor(convert_board_to_features(board), dtype=torch.float32)
+                            score = model.evaluate_board(board_features)
                             scored_moves.append((score, move))
                             board.pop()
 
@@ -96,7 +140,7 @@ def run_tournament(nn_name, generation, debug=False):
                     debug_print("You lost. Tournament over.", debug)
                     engine.quit()
                     debug_print(f"Final score for {nn_name}: {score}", debug)
-                    return
+                    return score, index
 
             debug_print(f"Current score: {score}", debug)
             index += 1
@@ -110,9 +154,12 @@ def run_tournament(nn_name, generation, debug=False):
             break
 
     debug_print(f"Final score for {nn_name}: {score}", debug)
+    return score, index
 
 if __name__ == "__main__":
     nn_name = input("Enter your name: ")
     generation = input("Enter the generation number: ")
     debug_mode = input("Enable debug mode? (yes/no): ").strip().lower() == "yes"
-    run_tournament(nn_name, generation, debug=debug_mode)
+    # Load the NNUE model outside the tournament function
+    nnue_model = NNUEModel.load_stockfish_format("path/to/your/nnue_model.nnue")
+    run_tournament(nn_name, generation, nnue_model, debug=debug_mode)

@@ -1,4 +1,5 @@
 name,elo,path
+random_engine,130,executables/chess-random-mover.exe
 alouette,800,executables/alouette32.exe
 acqua,844,executables/acqua.exe
 FoxCub,1000,executables/FoxCub.exe

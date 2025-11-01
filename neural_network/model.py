@@ -103,6 +103,25 @@ class NNUEModel(nn.Module):
         reader = NNUEReader(file_path)
         return reader.read()
 
+    def evaluate_board(self, board_features: Tensor) -> float:
+        """Evaluate a chess board position using the NNUE model.
+
+        Args:
+            board_features (Tensor): The input features representing the chess board position.
+
+        Returns:
+            float: The evaluation score of the board position.
+        """
+        if self.feature_set:
+            # Extract active features from the board features
+            board_features = self.feature_set.get_active_features(board_features)
+
+        # Pass the features through the model to get the evaluation score
+        output = self.model(board_features)
+
+        # Convert the output tensor to a scalar value
+        return output.item()
+
 
 def generate_stockfish_nn():
     """Generate a Stockfish-compatible NNUE model with predefined hidden layers."""

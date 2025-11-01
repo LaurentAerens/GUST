@@ -13,6 +13,8 @@ from engines.load_engine import (
     get_engine_info_by_index
 )
 import tournaments.tournament as tournament
+import random
+from neural_network.model import generate_stockfish_nn
 
 def play_game_with_engine_name(engine_name, debug=True):
     """Play a game against a chess engine loaded by its name."""
@@ -65,13 +67,29 @@ def play_game_with_engine_index(index, debug=True):
 def run_tournament(debug=True):
     """Run a tournament where the user plays against increasingly harder engines."""
     try:
-        nn_name = input("Enter your name: ")
+        user_name = input("Enter your name: ")
         generation = int(input("Enter the generation number: "))
         print("Starting a tournament...")
-        tournament.run_tournament(nn_name, generation, debug=debug)
+        tournament.run_tournament(user_name, generation, debug=debug)
         print("Tournament completed successfully!")
     except Exception as e:
         print(f"Error running tournament: {e}")
+
+def generate_random_model_and_run_tournament():
+    """Generate a random Stockfish-compatible NNUE model and run a tournament."""
+    # Generate a random Stockfish-compatible NNUE model
+    model = generate_stockfish_nn()
+
+    # Save the model to a temporary file
+    temp_model_path = f"temp_model_{random.randint(1000, 9999)}.nnue"
+    model.save_stockfish_format(temp_model_path)
+
+    # Run a tournament with the generated model
+    print("Running a tournament with a randomly generated model...")
+    tournament.run_tournament(nn_name="RandomModel", generation=0, model=model, debug=True)
+
+    # Clean up the temporary model file
+    os.remove(temp_model_path)
 
 def menu():
     print("\n--- GUST Function Testing Menu ---")
@@ -82,7 +100,8 @@ def menu():
     print("5. Get engine ELO by name")
     print("6. Play a game against engine by name")
     print("7. Run a tournament")
-    print("8. Exit")
+    print("8. Generate random model and run tournament")
+    print("9. Exit")
 
     choice = input("Enter your choice: ")
     return choice
@@ -147,6 +166,11 @@ def main():
             except Exception as e:
                 print(f"Error running tournament: {e}")
         elif choice == "8":
+            try:
+                generate_random_model_and_run_tournament()
+            except Exception as e:
+                print(f"Error generating random model and running tournament: {e}")
+        elif choice == "9":
             print("Exiting the menu. Goodbye!")
             break
         else:

@@ -5,6 +5,7 @@ from neural_network.model import generate_stockfish_nn, generate_nn_from_config
 import torch
 from torch import nn
 import random
+import os
 
 class PopulationModel:
     """Class to represent a model in the population with its name, score, and metadata."""
@@ -85,7 +86,7 @@ def generate_population_from_nnue(base_nnue_path: str, population_size: int):
 
     return population
 
-def create_new_generation(population: list[PopulationModel], survival_rate: float, mutation_rate: float, population_size: int, temperature: float, decay_rate: float):
+def create_new_generation(population: list[PopulationModel], survival_rate: float, mutation_rate: float, population_size: int, temperature: float, decay_rate: float, generation: int):
     """Create a new generation of models based on survival, mutation, and breeding.
 
     Args:
@@ -95,6 +96,7 @@ def create_new_generation(population: list[PopulationModel], survival_rate: floa
         population_size (int): The total size of the population.
         temperature (float): The temperature for mutation randomness.
         decay_rate (float): The rate at which survival rate and temperature decay.
+        generation (int): The current generation number.
 
     Returns:
         list[PopulationModel]: The new generation of models.
@@ -103,6 +105,13 @@ def create_new_generation(population: list[PopulationModel], survival_rate: floa
 
     # Sort population by score in descending order
     population.sort(key=lambda x: x.score, reverse=True)
+
+    # Serialize the current population to files
+    generation_folder = f"models/generation{generation}"
+    os.makedirs(generation_folder, exist_ok=True)
+    for model in population:
+        model_path = os.path.join(generation_folder, f"{model.name}_{model.score:.2f}.nnue")
+        model.model.save_stockfish_format(model_path)
 
     # Determine the number of survivors
     num_survivors = max(1, int(survival_rate * population_size))
@@ -177,6 +186,30 @@ def select_with_softmax(population: list[PopulationModel], num_to_select: int) -
     # Select models based on probabilities
     selected = random.choices(population, weights=probabilities, k=num_to_select)
     return selected
+
+def load_population_from_folder(folder_path: str) -> list[PopulationModel]:
+    """Load a population of models from a folder.
+
+    Args:
+        folder_path (str): Path to the folder containing serialized models.
+
+    Returns:
+        list[PopulationModel]: The loaded population of models.
+    """
+    from neural_network.model import NNUEModel
+
+    population = []
+    for file_name in os.listdir(folder_path):
+        if file_name.endswith(".nnue"):
+            file_path = os.path.join(folder_path, file_name)
+            model = NNUEModel.load_stockfish_format(file_path)
+
+            # Extract name and score from the file name
+            base_name = os.path.splitext(file_name)[0]
+            name, score = base_name.rsplit("_", 1)
+            population.append(PopulationModel(model, name, score=float(score)))
+
+    return population
 
 # Example usage:
 # stockfish_population = generate_population(10)
