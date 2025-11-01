@@ -46,7 +46,7 @@ def convert_board_to_features(board):
 
     return features
 
-def run_tournament(nn_name, generation, model, debug=False):
+def run_tournament(nn_name, generation, model, debug=False, start_level=0):
     """Run a tournament where the user plays against increasingly harder engines.
 
     Args:
@@ -54,17 +54,18 @@ def run_tournament(nn_name, generation, model, debug=False):
         generation (int): Generation number.
         model (NNUEModel): The NNUE model to evaluate board positions.
         debug (bool): Enable debug mode.
+        start_level (int): The starting engine index for the tournament.
 
     Returns:
         tuple: Final score and the index of the last engine played against.
     """
     score = 0
-    index = 0
+    index = start_level  # Start from the specified level
 
     # Get the maximum index of engines at startup
     max_index = get_max_index()
-    print(f"Maximum engine index: {max_index}")
-    debug_print(f"Starting tournament for {nn_name} in generation {generation}...", debug)
+    debug_print(f"Maximum engine index: {max_index}", debug)    
+    debug_print(f"Starting tournament for {nn_name} in generation {generation} from level {start_level}...", debug)
 
     while index <= max_index:
         try:
@@ -92,8 +93,8 @@ def run_tournament(nn_name, generation, model, debug=False):
                         for move in legal_moves:
                             board.push(move)
                             board_features = torch.tensor(convert_board_to_features(board), dtype=torch.float32)
-                            score = model.evaluate_board(board_features)
-                            scored_moves.append((score, move))
+                            evaluation_score = model.evaluate_board(board_features)
+                            scored_moves.append((evaluation_score, move))
                             board.pop()
 
                         # Pick the move with the highest score
@@ -111,7 +112,7 @@ def run_tournament(nn_name, generation, model, debug=False):
                 debug_print(board.result(), debug)
 
                 # Create directory structure for PGN storage
-                pgn_dir = os.path.join(f"generation{generation}", nn_name)
+                pgn_dir = os.path.join("tournament_results", f"generation{generation}", nn_name)
                 os.makedirs(pgn_dir, exist_ok=True)
 
                 # Save the full PGN
@@ -137,7 +138,7 @@ def run_tournament(nn_name, generation, model, debug=False):
                     debug_print("It's a draw! You earn 1 point.", debug)
                     score += 1
                 else:
-                    debug_print("You lost. Tournament over.", debug)
+                    print(f"You lost to engine {engine_name}. Final score: {score}. Tournament over.")
                     engine.quit()
                     debug_print(f"Final score for {nn_name}: {score}", debug)
                     return score, index

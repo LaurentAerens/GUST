@@ -221,3 +221,7 @@ Thumbs.db
 
 # Ignore all .cfg files
 *.cfg
+
+# Ignore models and tournament results folders
+models/
+tournament_results/

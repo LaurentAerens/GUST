@@ -8,11 +8,13 @@ import random
 import os
 
 class PopulationModel:
-    """Class to represent a model in the population with its name, score, and metadata."""
-    def __init__(self, model: nn.Module, name: str, score: float = 0.0, metadata: dict = None):
+    """Class to represent a model in the population with its name, score, level, and metadata."""
+    def __init__(self, model: nn.Module, name: str, score: float = 0.0, level: int = 0, metadata: dict = None, index: int = 0):
         self.model = model
         self.name = name
         self.score = score
+        self.level = level  # Added level attribute
+        self.index = index  # Added index attribute
         self.metadata = metadata or {}
 
 def generate_population(population_size: int, custom_config_path: str = None):
