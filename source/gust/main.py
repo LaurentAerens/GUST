@@ -12,8 +12,9 @@ from engines.load_engine import (
     get_engine_elo, 
     get_engine_info_by_index
 )
+import tournaments.tournament as tournament
 
-def play_game_with_engine_name(engine_name, debug=False):
+def play_game_with_engine_name(engine_name, debug=True):
     """Play a game against a chess engine loaded by its name."""
     board = chess.Board()
     engine = load_engine(engine_name, debug=debug)
@@ -37,7 +38,7 @@ def play_game_with_engine_name(engine_name, debug=False):
     print(board.result())
     engine.quit()
 
-def play_game_with_engine_index(index, debug=False):
+def play_game_with_engine_index(index, debug=True):
     """Play a game against a chess engine loaded by its index."""
     board = chess.Board()
     engine = load_engine_by_index(index, debug=debug)
@@ -61,6 +62,17 @@ def play_game_with_engine_index(index, debug=False):
     print(board.result())
     engine.quit()
 
+def run_tournament(debug=True):
+    """Run a tournament where the user plays against increasingly harder engines."""
+    try:
+        user_name = input("Enter your name: ")
+        generation = int(input("Enter the generation number: "))
+        print("Starting a tournament...")
+        tournament.run_tournament(user_name, generation, debug=debug)
+        print("Tournament completed successfully!")
+    except Exception as e:
+        print(f"Error running tournament: {e}")
+
 def menu():
     print("\n--- GUST Function Testing Menu ---")
     print("1. Sort engines by ELO")
@@ -69,7 +81,8 @@ def menu():
     print("4. Get engine info by index")
     print("5. Get engine ELO by name")
     print("6. Play a game against engine by name")
-    print("7. Exit")
+    print("7. Run a tournament")
+    print("8. Exit")
 
     choice = input("Enter your choice: ")
     return choice
@@ -100,7 +113,7 @@ def main():
             print("Sorting engines by ELO...")
             sort_engines_by_elo(debug=True)
         elif choice == "2":
-            max_index = get_max_index()
+            max_index = get_max_index(debug=True)
             print(f"Maximum index: {max_index}")
         elif choice == "3":
             try:
@@ -129,6 +142,11 @@ def main():
             except Exception as e:
                 print(f"Error playing game with engine: {e}")
         elif choice == "7":
+            try:
+                run_tournament(debug=True)
+            except Exception as e:
+                print(f"Error running tournament: {e}")
+        elif choice == "8":
             print("Exiting the menu. Goodbye!")
             break
         else:

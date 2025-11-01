@@ -2,9 +2,14 @@ import chess.engine
 import csv
 import os
 
+def debug_print(message, debug):
+    if debug:
+        print(message)
+
 # Index-based methods
-def get_max_index():
+def get_max_index(debug=False):
     """Get the maximum index of engines in the enginelist.csv file."""
+    debug_print("Getting maximum engine index...", debug)
     base_dir = os.path.dirname(os.path.abspath(__file__))
     enginelist_path = os.path.join(base_dir, "enginelist.csv")
 
@@ -14,6 +19,7 @@ def get_max_index():
 
 def load_engine_by_index(index, debug=False):
     """Load a chess engine by its index in the enginelist.csv file."""
+    debug_print(f"Loading engine at index {index}...", debug)
     base_dir = os.path.dirname(os.path.abspath(__file__))
     enginelist_path = os.path.join(base_dir, "enginelist.csv")
     executables_dir = os.path.join(base_dir, "executables")
@@ -27,14 +33,13 @@ def load_engine_by_index(index, debug=False):
         engine_path = os.path.join(executables_dir, os.path.basename(engine_row["path"]))
         engine_path = os.path.normpath(engine_path)
 
-        if debug:
-            print(f"Loading engine at index {index}: {engine_row}")
-            print(f"Engine path: {engine_path}")
+        debug_print(f"Engine path: {engine_path}", debug)
 
         return chess.engine.SimpleEngine.popen_uci(engine_path)
 
 def get_engine_info_by_index(index, debug=False):
     """Get the ELO and name of an engine by its index."""
+    debug_print(f"Fetching engine info for index {index}...", debug)
     base_dir = os.path.dirname(os.path.abspath(__file__))
     enginelist_path = os.path.join(base_dir, "enginelist.csv")
 
@@ -45,17 +50,15 @@ def get_engine_info_by_index(index, debug=False):
 
         engine = reader[index]
 
-        if debug:
-            print(f"Engine info retrieved by index {index}: {engine}")
+        debug_print(f"Engine info retrieved by index {index}: {engine}", debug)
 
         return {"name": engine["name"], "elo": int(engine["elo"])}
 
 # Name-based methods
 def load_engine(engine_name, debug=False):
     """Load a chess engine by name from the enginelist.csv file."""
-    if debug:
-        print(f"Loading engine: {engine_name}")
-        print("Reading enginelist.csv...")
+    debug_print(f"Loading engine: {engine_name}", debug)
+    debug_print("Reading enginelist.csv...", debug)
 
     base_dir = os.path.dirname(os.path.abspath(__file__))
     enginelist_path = os.path.join(base_dir, "enginelist.csv")
@@ -64,18 +67,17 @@ def load_engine(engine_name, debug=False):
     with open(enginelist_path, "r") as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
-            if debug:
-                print(f"Checking row: {row}")
+            debug_print(f"Checking row: {row}", debug)
             if row["name"] == engine_name:
                 engine_path = os.path.join(executables_dir, os.path.basename(row["path"]))
                 engine_path = os.path.normpath(engine_path)  # Normalize path for cross-platform compatibility
-                if debug:
-                    print(f"Engine found. Relative Path: {engine_path}")
+                debug_print(f"Engine found. Relative Path: {engine_path}", debug)
                 return chess.engine.SimpleEngine.popen_uci(engine_path)
     raise ValueError(f"Engine '{engine_name}' not found in enginelist.csv")
 
 def get_engine_elo(name, debug=False):
     """Get the ELO of an engine by its name."""
+    debug_print(f"Getting ELO for engine '{name}'...", debug)
     base_dir = os.path.dirname(os.path.abspath(__file__))
     enginelist_path = os.path.join(base_dir, "enginelist.csv")
 
@@ -85,14 +87,14 @@ def get_engine_elo(name, debug=False):
         if engine is None:
             raise ValueError(f"Engine with name '{name}' not found.")
 
-        if debug:
-            print(f"Engine ELO retrieved: {engine['elo']} for name: {name}")
+        debug_print(f"Engine ELO retrieved: {engine['elo']} for name: {name}", debug)
 
         return int(engine["elo"])
 
 # Utility methods
 def sort_engines_by_elo(debug=False):
     """Sort the enginelist.csv file by ELO in ascending order."""
+    debug_print("Sorting engines by ELO...", debug)
     base_dir = os.path.dirname(os.path.abspath(__file__))
     enginelist_path = os.path.join(base_dir, "enginelist.csv")
 
@@ -105,10 +107,9 @@ def sort_engines_by_elo(debug=False):
         writer.writeheader()
         writer.writerows(sorted_engines)
 
-    if debug:
-        print("Engines sorted by ELO:")
-        for engine in sorted_engines:
-            print(engine)
+    debug_print("Engines sorted by ELO:", debug)
+    for engine in sorted_engines:
+        debug_print(f"{engine}", debug)
 
 if __name__ == "__main__":
     engine_name = input("Enter the name of the engine to load: ")

@@ -218,3 +218,6 @@ Thumbs.db
 
 # Ignore chess engine executables
 *.exe
+
+# Ignore all .cfg files
+*.cfg
