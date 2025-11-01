@@ -215,3 +215,6 @@ __marimo__/
 
 # Windows
 Thumbs.db
+
+# Ignore chess engine executables
+*.exe
