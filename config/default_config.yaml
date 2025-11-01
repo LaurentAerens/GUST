@@ -1,0 +1,53 @@
+# Default configuration for GUST
+
+# Genetic Algorithm Parameters
+genetic:
+  population_size: 50
+  generations: 100
+  mutation_rate: 0.01
+  crossover_rate: 0.7
+  elite_size: 5
+  tournament_size: 3
+
+# Training Parameters
+training:
+  episodes_per_evaluation: 10
+  max_training_time_hours: 24
+  checkpoint_interval: 10
+  early_stopping_patience: 20
+
+# Stockfish Parameters
+stockfish:
+  threads: 4
+  hash_size_mb: 256
+  depth: 20
+  time_limit_ms: 1000
+
+# Evaluation Parameters
+evaluation:
+  test_games: 100
+  elo_calculation_method: "bayeselo"
+  benchmark_opponents: []
+
+# Logging
+logging:
+  level: "INFO"
+  file: "logs/gust.log"
+  console_output: true
+
+# Data Storage
+data:
+  training_data_dir: "data/training"
+  models_dir: "data/models"
+  results_dir: "data/results"
+
+# API Settings (when implemented)
+api:
+  host: "0.0.0.0"
+  port: 8000
+  enable: false
+
+# GUI Settings (when implemented)
+gui:
+  theme: "default"
+  enable: false

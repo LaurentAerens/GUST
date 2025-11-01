@@ -144,6 +144,16 @@ ENV/
 env.bak/
 venv.bak/
 
+# GUST specific
+data/training/*
+!data/training/.gitkeep
+data/models/*
+!data/models/.gitkeep
+data/results/*
+!data/results/.gitkeep
+logs/*
+!logs/.gitkeep
+
 # Spyder project settings
 .spyderproject
 .spyproject
