@@ -1,6 +1,7 @@
 import chess
 import chess.engine
 import os
+import random
 from engines.load_engine import load_engine_by_index, get_max_index, get_engine_info_by_index
 from chess.pgn import Game
 
@@ -8,7 +9,11 @@ def debug_print(message, debug):
     if debug:
         print(message)
 
-def run_tournament(user_name, generation, debug=False):
+def score_position(board):
+    """Score a given board position. For now, return a random value between 0 and 1000."""
+    return random.randint(0, 1000)
+
+def run_tournament(nn_name, generation, debug=False):
     """Run a tournament where the user plays against increasingly harder engines."""
     score = 0
     index = 0
@@ -16,7 +21,7 @@ def run_tournament(user_name, generation, debug=False):
     # Get the maximum index of engines at startup
     max_index = get_max_index()
     print(f"Maximum engine index: {max_index}")
-    debug_print(f"Starting tournament for {user_name} in generation {generation}...", debug)
+    debug_print(f"Starting tournament for {nn_name} in generation {generation}...", debug)
 
     while index <= max_index:
         try:
@@ -24,18 +29,6 @@ def run_tournament(user_name, generation, debug=False):
             engine_info = get_engine_info_by_index(index, debug=debug)
             engine_name = engine_info["name"]
             debug_print(f"Loading engine at index {index} ({engine_name})...", debug)
-
-            if debug:
-                debug_command = input("Enter debug command for engine loading (or press Enter to continue): ")
-                if debug_command.lower() == "victory":
-                    debug_print("Debug: Forcing a victory during engine loading.", debug)
-                    return
-                elif debug_command.lower() == "draw":
-                    debug_print("Debug: Forcing a draw during engine loading.", debug)
-                    return
-                elif debug_command.lower() == "lose":
-                    debug_print("Debug: Forcing a loss during engine loading.", debug)
-                    return
 
             engine = load_engine_by_index(index, debug=debug)
 
@@ -47,13 +40,24 @@ def run_tournament(user_name, generation, debug=False):
                     debug_print(str(board), debug)
 
                     if board.turn == color:
-                        move = input("Enter your move: ")
+                        # Generate all legal moves
+                        legal_moves = list(board.legal_moves)
+                        debug_print(f"Legal moves: {legal_moves}", debug)
 
-                        try:
-                            board.push_san(move)
-                        except ValueError:
-                            debug_print("Invalid move. Try again.", debug)
-                            continue
+                        # Evaluate all future positions
+                        scored_moves = []
+                        for move in legal_moves:
+                            board.push(move)
+                            score = score_position(board)
+                            scored_moves.append((score, move))
+                            board.pop()
+
+                        # Pick the move with the highest score
+                        best_move = max(scored_moves, key=lambda x: x[0])[1]
+                        debug_print(f"Best move: {best_move}", debug)
+
+                        # Play the best move
+                        board.push(best_move)
                     else:
                         result = engine.play(board, chess.engine.Limit(time=1.0))
                         board.push(result.move)
@@ -63,14 +67,14 @@ def run_tournament(user_name, generation, debug=False):
                 debug_print(board.result(), debug)
 
                 # Create directory structure for PGN storage
-                pgn_dir = os.path.join(f"generation{generation}", user_name)
+                pgn_dir = os.path.join(f"generation{generation}", nn_name)
                 os.makedirs(pgn_dir, exist_ok=True)
 
                 # Save the full PGN
                 game = Game.from_board(board)
                 game.headers["Event"] = "Tournament"
-                game.headers["White"] = user_name if color == chess.WHITE else engine_name
-                game.headers["Black"] = engine_name if color == chess.WHITE else user_name
+                game.headers["White"] = nn_name if color == chess.WHITE else engine_name
+                game.headers["Black"] = engine_name if color == chess.WHITE else nn_name
                 game.headers["Result"] = board.result()
 
                 pgn_path = os.path.join(pgn_dir, f"{engine_name}_{'white' if color == chess.WHITE else 'black'}.pgn")
@@ -91,7 +95,7 @@ def run_tournament(user_name, generation, debug=False):
                 else:
                     debug_print("You lost. Tournament over.", debug)
                     engine.quit()
-                    debug_print(f"Final score for {user_name}: {score}", debug)
+                    debug_print(f"Final score for {nn_name}: {score}", debug)
                     return
 
             debug_print(f"Current score: {score}", debug)
@@ -105,10 +109,10 @@ def run_tournament(user_name, generation, debug=False):
             debug_print(f"An error occurred: {e}", debug)
             break
 
-    debug_print(f"Final score for {user_name}: {score}", debug)
+    debug_print(f"Final score for {nn_name}: {score}", debug)
 
 if __name__ == "__main__":
-    user_name = input("Enter your name: ")
+    nn_name = input("Enter your name: ")
     generation = input("Enter the generation number: ")
     debug_mode = input("Enable debug mode? (yes/no): ").strip().lower() == "yes"
-    run_tournament(user_name, generation, debug=debug_mode)
+    run_tournament(nn_name, generation, debug=debug_mode)
