@@ -1,5 +1,6 @@
 import sys
 import os
+from concurrent.futures import ThreadPoolExecutor
 
 import chess
 import chess.engine
@@ -80,8 +81,13 @@ def main():
 
     while True:
         print(f"Starting tournament for generation {generation}...")
-        for model in population:
-            score, level = tournament.run_tournament(model.name, generation, model.model, debug=False)
+        with ThreadPoolExecutor() as executor:
+            results = list(executor.map(
+                lambda model: tournament.run_tournament(model.name, generation, model.model, debug=False),
+                population
+            ))
+
+        for model, (score, level) in zip(population, results):
             model.score = score
             model.level = level
 

@@ -1,11 +1,11 @@
 import chess
 import chess.engine
 import os
-import random
 from engines.load_engine import load_engine_by_index, get_max_index, get_engine_info_by_index
 from chess.pgn import Game
 from neural_network.model import NNUEModel
 import torch
+from datetime import datetime
 
 def debug_print(message, debug):
     if debug:
@@ -17,7 +17,7 @@ def score_position(board):
     board_features = convert_board_to_features(board)
 
     # Load the NNUE model (ensure the path to the model is correct)
-    nnue_model = NNUEModel.load_stockfish_format("path/to/your/nnue_model.nnue")
+    nnue_model = NNUEModel.load_stockfish_format("path/to/{nn_name}r/nnue_model.nnue")
 
     # Evaluate the board using the NNUE model
     score = nnue_model.evaluate_board(torch.tensor(board_features, dtype=torch.float32))
@@ -129,16 +129,17 @@ def run_tournament(nn_name, generation, model, debug=False, start_level=0):
                 debug_print(f"Game saved to {pgn_path}", debug)
 
                 if board.result() == "1-0" and color == chess.WHITE:
-                    debug_print("You won as White! Now play as Black.", debug)
+                    debug_print("{nn_name} won as White! Now play as Black.", debug)
                     score += 10
                 elif board.result() == "1-0" and color == chess.BLACK:
-                    debug_print("You won as Black! Moving to the next engine.", debug)
+                    debug_print("{nn_name} won as Black! Moving to the next engine.", debug)
                     score += 10
                 elif board.result() == "1/2-1/2":
-                    debug_print("It's a draw! You earn 1 point.", debug)
+                    debug_print("It's a draw! {nn_name} earn 1 point.", debug)
                     score += 1
                 else:
-                    print(f"You lost to engine {engine_name}. Final score: {score}. Tournament over.")
+                    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    print(f"[{timestamp}] {nn_name} lost to engine {engine_name}. Final score: {score}. Tournament over.")
                     engine.quit()
                     debug_print(f"Final score for {nn_name}: {score}", debug)
                     return score, index
@@ -154,13 +155,13 @@ def run_tournament(nn_name, generation, model, debug=False, start_level=0):
             debug_print(f"An error occurred: {e}", debug)
             break
 
-    debug_print(f"Final score for {nn_name}: {score}", debug)
+    print(f"Final score for {nn_name}: {score}")
     return score, index
 
 if __name__ == "__main__":
-    nn_name = input("Enter your name: ")
+    nn_name = input("Enter {nn_name}r name: ")
     generation = input("Enter the generation number: ")
     debug_mode = input("Enable debug mode? (yes/no): ").strip().lower() == "yes"
     # Load the NNUE model outside the tournament function
-    nnue_model = NNUEModel.load_stockfish_format("path/to/your/nnue_model.nnue")
+    nnue_model = NNUEModel.load_stockfish_format("path/to/{nn_name}r/nnue_model.nnue")
     run_tournament(nn_name, generation, nnue_model, debug=debug_mode)

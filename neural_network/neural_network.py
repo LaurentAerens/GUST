@@ -168,7 +168,7 @@ def create_new_generation(population: list[PopulationModel], survival_rate: floa
     return new_generation, survival_rate, temperature
 
 def select_with_softmax(population: list[PopulationModel], num_to_select: int) -> list[PopulationModel]:
-    """Select models from the population using softmax-scaled probabilities.
+    """Select unique models from the population using softmax-scaled probabilities.
 
     Args:
         population (list[PopulationModel]): The population of models to select from.
@@ -185,9 +185,14 @@ def select_with_softmax(population: list[PopulationModel], num_to_select: int) -
     total = sum(exp_scores)
     probabilities = [exp_score / total for exp_score in exp_scores]
 
-    # Select models based on probabilities
-    selected = random.choices(population, weights=probabilities, k=num_to_select)
-    return selected
+    # Select unique models based on probabilities
+    selected = set()
+    while len(selected) < num_to_select:
+        chosen = random.choices(population, weights=probabilities, k=1)[0]
+        if chosen not in selected:
+            selected.add(chosen)
+
+    return list(selected)
 
 def load_population_from_folder(folder_path: str) -> list[PopulationModel]:
     """Load a population of models from a folder.
