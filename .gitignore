@@ -225,3 +225,4 @@ Thumbs.db
 # Ignore models and tournament results folders
 models/
 tournament_results/
+appsettings.json
