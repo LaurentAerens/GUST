@@ -133,8 +133,14 @@ def create_new_generation(population: list[PopulationModel], survival_rate: floa
             mutated_model = mutate_model(parent.model, temperature=temperature)
 
             # Generate a new name for the mutated model
+            existing_names = {m.name for m in new_generation}
             mutation_count = parent.metadata.get("mutations", 0) + 1
             name = f"{parent.name}.{mutation_count}"
+
+            # Ensure the name is unique
+            while name in existing_names:
+                mutation_count += 1
+                name = f"{parent.name}.{mutation_count}"
 
             # Update metadata
             metadata = parent.metadata.copy()
