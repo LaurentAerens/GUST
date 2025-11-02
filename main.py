@@ -79,7 +79,13 @@ def main():
                 for i in range(1, population_size + 1)
             ]
 
-    while True:
+    max_generations = settings.get("max_generations", 100)  # Default to 100 generations if not specified
+    stagnation_limit = settings.get("stagnation_limit", 10)  # Default to 10 generations if not specified
+    stagnation_counter = 0
+    previous_total_score = float("-inf")
+    last_level_up_generation = -1
+
+    while generation < max_generations:
         print(f"Starting tournament for generation {generation}...")
         with ThreadPoolExecutor() as executor:
             results = list(executor.map(
@@ -91,15 +97,51 @@ def main():
             model.score = score
             model.level = level
 
+        # Calculate the total score of the current generation
+        current_total_score = sum(model.score for model in population)
+        print(f"Total score for generation {generation}: {current_total_score:.2f}")
+
+        # Check for stagnation
+        if current_total_score <= previous_total_score and generation - last_level_up_generation > stagnation_limit:
+            stagnation_counter += 1
+            print(f"No improvement detected. Stagnation counter: {stagnation_counter}")
+        else:
+            stagnation_counter = 0
+            print("Improvement detected or recent level-up. Resetting stagnation counter.")
+
+        previous_total_score = current_total_score
+
+        if stagnation_counter >= stagnation_limit:
+            print("Stagnation limit reached. Stopping training.")
+            break
+
+        # Check if max generations reached
+        if generation >= max_generations:
+            print("Maximum generations reached. Stopping training.")
+            break
+
+        # Check if any model has beaten all engines
+        max_engine_score = get_max_index() * 20
+        best_model = max(population, key=lambda m: m.score)
+        if best_model.score >= max_engine_score:
+            print(f"Model {best_model.name} has beaten all engines. Stopping training.")
+            break
+
         # Check if level-up condition is met
         level_up_threshold = settings.get("level_up_threshold", 5)
-        current_level = level_up(population, current_level, level_up_threshold)
+        new_level = level_up(population, current_level, level_up_threshold)
+        if new_level > current_level:
+            last_level_up_generation = generation
+            print(f"Level-up detected! New level: {new_level}")
+        current_level = new_level
 
         print("Creating new generation...")
         population, survival_rate, temperature = create_new_generation(
             population, survival_rate, mutation_rate, population_size, temperature, decay_rate, generation
         )
         generation += 1
+
+    print("Training stopped.")
 def level_up(population, current_level, level_up_threshold):
     """Check if the level-up condition is met based on the population's performance.
 

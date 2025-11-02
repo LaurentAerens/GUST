@@ -191,14 +191,25 @@ def select_with_softmax(population: list[PopulationModel], num_to_select: int) -
     total = sum(exp_scores)
     probabilities = [exp_score / total for exp_score in exp_scores]
 
-    # Select unique models based on probabilities
-    selected = set()
-    while len(selected) < num_to_select:
-        chosen = random.choices(population, weights=probabilities, k=1)[0]
-        if chosen not in selected:
-            selected.add(chosen)
+    # Select unique models by picking one at a time and removing it from the list
+    selected = []
+    for _ in range(num_to_select):
+        if not population:
+            break  # Stop if the population is empty
 
-    return list(selected)
+        chosen = random.choices(population, weights=probabilities, k=1)[0]
+        selected.append(chosen)
+
+        # Remove the chosen model from the population and update probabilities
+        index = population.index(chosen)
+        population.pop(index)
+        probabilities.pop(index)
+
+        if population:  # Recalculate probabilities only if there are remaining elements
+            total = sum(probabilities)
+            probabilities = [p / total for p in probabilities]
+
+    return selected
 
 def load_population_from_folder(folder_path: str) -> list[PopulationModel]:
     """Load a population of models from a folder.
